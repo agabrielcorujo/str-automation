@@ -1,0 +1,5 @@
+deploy.py
+pyproject.toml
+uv.lock
+.venv
+.env
