@@ -52,7 +52,7 @@ def get_conversation(reservation_code:str):
     return (convo,guest)
 
 def send_hostex_message(conversation_id:str,url:str,guest:str):
-    url = f"https://api.hostex.io/v3/conversations/{conversation_id}"
+    hostex_url = f"https://api.hostex.io/v3/conversations/{conversation_id}"
 
     payload = { "message": GOOGLE_FORM_MESSAGE.format(link=url,guest_name=guest) }
 
@@ -62,7 +62,7 @@ def send_hostex_message(conversation_id:str,url:str,guest:str):
         "Hostex-Access-Token": os.getenv("HOSTEX_API_TOKEN")
     }
 
-    response = requests.post(url, json=payload, headers=headers)
+    response = requests.post(hostex_url, json=payload, headers=headers)
 
     return 
 

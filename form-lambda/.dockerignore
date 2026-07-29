@@ -2,3 +2,4 @@
 .venv
 pyproject.toml
 uv.lock
+deploy.py
