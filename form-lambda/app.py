@@ -24,12 +24,12 @@ def _get_pdf():
         "RegistroAquatika.pdf",
         "/tmp/RegistroAquatika.pdf"
     )
-def _save_pdf(reservation_code:str):
+def _save_pdf(reservation_code:str,apt:str,main_guest:str,checkin_date:str,checkout_date:str):
 
     s3.upload_file(
         f"/tmp/RegistroAquatika-{reservation_code}.pdf",
         os.getenv("PDF_BUCKET_NAME"),
-        f"Reservations/RegistroAquatika-{reservation_code}.pdf"
+        f"Reservations/APT {apt} - {main_guest} {checkin_date} a {checkout_date}.pdf"
     )
 def _get_signature():
 
@@ -320,7 +320,7 @@ def lambda_handler(event,context):
             reservation_code=clean_event["reservation_code"]
             )
 
-        _save_pdf(clean_event["reservation_code"])
+        _save_pdf(clean_event["reservation_code"],APARTMENT_MAPPING[str(deets["apartment"])],clean_event["primary_guest"],deets["checkin"],deets["checkout"])
 
         schedule_email(deets["checkin"],deets["checkout"],clean_event["reservation_code"],APARTMENT_MAPPING[str(deets["apartment"])],clean_event["primary_guest"])
 
