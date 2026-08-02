@@ -2,11 +2,12 @@ import requests
 from urllib.parse import quote
 import os
 import json as j
+from datetime import datetime
 
 GOOGLE_FORM_MESSAGE="""
 Dear {guest_name},
 
-As we prepare for your arrival on Check-in Date, the Aquatika Homeowners Association 🏡 requires the following information for all guests included in your reservation:
+As we prepare for your arrival on {check_in_date}, the Aquatika Homeowners Association 🏡 requires the following information for all guests included in your reservation:
 
 1. Full name of each guest
 2. Your phone number
@@ -27,12 +28,28 @@ def google_form(code:str):
 
     reservation_code = code
 
-    url = (
+    og_url = (
         "https://docs.google.com/forms/d/e/1FAIpQLSdBPfYELiww2uZSbR3XclCJ-6Y12NTIg1m2ZAD7b_Lkcp5Awg/viewform"
         f"?usp=pp_url&entry.1987306483={quote(reservation_code)}"
     )
 
-    return url
+    headers = {
+    "Authorization": f"Bearer {os.getenv('BITLY_TOKEN')}",
+    "Content-Type": "application/json",
+    }
+
+    data = {
+    "long_url": og_url,
+    "domain": "bit.ly",
+    }
+
+    response = requests.post(
+    "https://api-ssl.bitly.com/v4/shorten",
+    headers=headers,
+    json=data,
+    )
+
+    return response.json()["link"]
 
 def get_conversation(reservation_code:str):
     url = f"https://api.hostex.io/v3/reservations?reservation_code={reservation_code}"
@@ -48,13 +65,14 @@ def get_conversation(reservation_code:str):
 
     convo = result["data"]["reservations"][0]["conversation_id"]
     guest = result["data"]["reservations"][0]["guest_name"]
+    check_in_date = datetime.strptime(result["data"]["reservations"][0]["check_in_date"],"%Y-%m-%d").strftime("%m-%d-%Y")
 
-    return (convo,guest)
+    return (convo,guest,check_in_date)
 
-def send_hostex_message(conversation_id:str,url:str,guest:str):
+def send_hostex_message(conversation_id:str,url:str,guest:str,check_in_date:str):
     hostex_url = f"https://api.hostex.io/v3/conversations/{conversation_id}"
 
-    payload = { "message": GOOGLE_FORM_MESSAGE.format(link=url,guest_name=guest) }
+    payload = { "message": GOOGLE_FORM_MESSAGE.format(link=url,guest_name=guest,check_in_date=check_in_date) }
 
     headers = {
         "accept": "application/json",
@@ -75,9 +93,10 @@ def lambda_handler(event,context):
         convo_and_guest = get_conversation(reservation_code)
 
         convo = convo_and_guest[0]
-        guest = convo_and_guest[1]
+        guest = convo_and_guest[1].split()[0]
+        check_in_date = convo_and_guest[2]
 
-        send_hostex_message(convo,form,guest)
+        send_hostex_message(convo,form,guest,check_in_date)
 
         return {"statusCode":200}
 
@@ -86,7 +105,4 @@ def lambda_handler(event,context):
         print(e)
 
         return {"statusCode":500}
-
-
-
 
