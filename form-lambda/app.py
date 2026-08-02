@@ -9,6 +9,7 @@ from zoneinfo import ZoneInfo
 import base64
 
 s3 = boto3.client("s3")
+scheduler = boto3.client("scheduler")
 
 APARTMENT_MAPPING={
     "12664173":"303",
@@ -297,6 +298,13 @@ def schedule_email(checkin_date:datetime,checkout_date:datetime,reservation_code
 
         return
 
+def stop_cron_job(reservation_code:str):
+
+    scheduler.delete_schedule(
+        Name=f"{reservation_code}-cronjob"
+    )
+
+    return 
 
 def lambda_handler(event,context):
 
@@ -305,6 +313,8 @@ def lambda_handler(event,context):
     try:
 
         deets = get_reservation_details(clean_event["reservation_code"])
+
+        stop_cron_job(clean_event["reservation_code"])
 
         _get_pdf()
 
