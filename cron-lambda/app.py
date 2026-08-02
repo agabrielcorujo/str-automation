@@ -3,6 +3,7 @@ import boto3
 import os
 import requests
 from datetime import datetime, timedelta
+from zoneinfo import ZoneInfo
 
 scheduler = boto3.client("scheduler")
 
@@ -53,35 +54,59 @@ def handle_updated_reservation(details:str):
         return
 
 
-def create_cronjob(deets:dict)->bool:
+def create_cronjob(deets: dict) -> bool:
 
-    deets.pop("status",None)
+    deets.pop("status", None)
 
-    runat = datetime.strptime(deets["checkin"], "%Y-%m-%d") 
+    pr_tz = ZoneInfo("America/Puerto_Rico")
+
+    # Calculate first day
+    runat = datetime.strptime(
+        deets["checkin"],
+        "%Y-%m-%d"
+    ).replace(tzinfo=pr_tz)
+
     runat -= timedelta(days=int(os.getenv("DAYS_BEFORE")))
-    runat = runat.replace(hour=17, minute=30)
 
-    now = datetime.now()
+    # Run at 9:30 AM
+    runat = runat.replace(
+        hour=9,
+        minute=30,
+        second=0,
+        microsecond=0
+    )
 
+    now = datetime.now(pr_tz)
+
+    # If first scheduled time has already passed
     if runat <= now:
         runat = now + timedelta(minutes=15)
         runat = runat.replace(microsecond=0)
 
     scheduler.create_schedule(
         Name=f"{deets['reservation_code']}-cronjob",
-        ScheduleExpression=f"at({runat.isoformat()})",
+
+        ScheduleExpression="rate(3 days)",
+
+        StartDate=runat,
+
+        ScheduleExpressionTimezone="America/Puerto_Rico",
+
         FlexibleTimeWindow={
             "Mode": "OFF"
         },
+
         Target={
             "Arn": os.getenv("GFORM_LAMBDA_ARN"),
             "RoleArn": "arn:aws:iam::471354727816:role/str-automation-cron-role",
             "Input": json.dumps(deets)
-        },
-        ActionAfterCompletion="DELETE"
+        }
     )
 
-    print(f"cron scheduled for {deets['reservation_code']} at {runat}")
+    print(
+        f"cron scheduled for {deets['reservation_code']} "
+        f"starting at {runat} and repeating every 3 days"
+    )
 
     return True
 
