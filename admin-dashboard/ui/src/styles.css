@@ -54,7 +54,7 @@ button:disabled {
   opacity: 0.72;
 }
 
-input {
+input:not([type='checkbox']) {
   width: 100%;
   border: 1px solid rgba(13, 107, 110, 0.16);
   border-radius: 16px;
@@ -67,17 +67,30 @@ input {
     transform 120ms ease;
 }
 
-input::placeholder {
+input:not([type='checkbox'])::placeholder {
   color: rgba(23, 57, 59, 0.42);
 }
 
-input:focus {
+input:not([type='checkbox']):focus {
   outline: none;
   border-color: rgba(13, 107, 110, 0.75);
   box-shadow:
     0 0 0 4px rgba(13, 107, 110, 0.12),
     0 12px 24px rgba(13, 107, 110, 0.08);
   transform: translateY(-1px);
+}
+
+input[type='checkbox'] {
+  width: 1.15rem;
+  height: 1.15rem;
+  margin: 0.22rem 0 0;
+  accent-color: var(--teal);
+  flex-shrink: 0;
+}
+
+input[type='checkbox']:focus-visible {
+  outline: 2px solid rgba(13, 107, 110, 0.55);
+  outline-offset: 3px;
 }
 
 .page-shell {
@@ -211,7 +224,8 @@ h2 {
   grid-column: 1 / -1;
 }
 
-.guest-section {
+.guest-section,
+.confirmation-section {
   margin-top: 1.6rem;
   padding-top: 1.4rem;
   border-top: 1px solid rgba(171, 138, 81, 0.22);
@@ -258,6 +272,26 @@ h2 {
   color: var(--muted);
   padding: 1rem;
   text-align: center;
+}
+
+.confirmation-list {
+  display: grid;
+  gap: 0.85rem;
+}
+
+.confirmation-item {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.85rem;
+  align-items: start;
+  border: 1px solid rgba(13, 107, 110, 0.14);
+  border-radius: 18px;
+  background: rgba(255, 253, 248, 0.72);
+  padding: 1rem;
+}
+
+.confirmation-item span {
+  color: var(--ink);
 }
 
 .primary-action,

@@ -7,11 +7,36 @@ type GuestField = {
   name: string
 }
 
+type ConfirmationState = {
+  listedEveryGuest: boolean
+  informationAccurate: boolean
+  reviewedVisitorPolicy: boolean
+}
+
 const WELCOME_MESSAGE =
   'Welcome! Please complete the information below for all guests included in your stay.'
 const MAX_ADDITIONAL_GUESTS = 9
 const FALLBACK_SUBMIT_DELAY_MS = 900
 const PHONE_NUMBER_PATTERN = '^\\(\\d{3}\\) \\d{3}-\\d{4}$'
+const CONFIRMATION_OPTIONS: Array<{
+  key: keyof ConfirmationState
+  label: string
+}> = [
+  {
+    key: 'listedEveryGuest',
+    label:
+      'I have listed every guest staying in the apartment (reminder: anyone not included in the form will not be permitted to enter)',
+  },
+  {
+    key: 'informationAccurate',
+    label: 'I certify that the information provided is accurate',
+  },
+  {
+    key: 'reviewedVisitorPolicy',
+    label:
+      'I have reviewed and acknowledge the visitor policy included in the listing description',
+  },
+]
 
 function getReservationId() {
   if (typeof window === 'undefined') {
@@ -33,13 +58,21 @@ function getReservationId() {
 function buildSubmissionPayload(
   reservationId: string,
   primaryGuest: string,
+  emailAddress: string,
   phoneNumber: string,
   guests: GuestField[],
+  confirmations: ConfirmationState,
 ) {
   const submission: Record<string, string> = {
     'Reservation ID': reservationId,
     'Primary Guest Full Name': primaryGuest.trim(),
+    'Email Address': emailAddress.trim(),
     'Phone number': phoneNumber.trim(),
+    'Confirmed Every Guest Is Listed': confirmations.listedEveryGuest ? 'Yes' : 'No',
+    'Confirmed Information Is Accurate': confirmations.informationAccurate ? 'Yes' : 'No',
+    'Confirmed Visitor Policy Acknowledgement': confirmations.reviewedVisitorPolicy
+      ? 'Yes'
+      : 'No',
   }
 
   for (let guestNumber = 2; guestNumber <= 10; guestNumber += 1) {
@@ -90,8 +123,14 @@ function App() {
 
   const [screen, setScreen] = useState<Screen>(initialScreen)
   const [primaryGuest, setPrimaryGuest] = useState('')
+  const [emailAddress, setEmailAddress] = useState('')
   const [phoneNumber, setPhoneNumber] = useState('')
   const [additionalGuests, setAdditionalGuests] = useState<GuestField[]>([])
+  const [confirmations, setConfirmations] = useState<ConfirmationState>({
+    listedEveryGuest: false,
+    informationAccurate: false,
+    reviewedVisitorPolicy: false,
+  })
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [errorMessage, setErrorMessage] = useState('')
   const [logoVisible, setLogoVisible] = useState(true)
@@ -106,8 +145,10 @@ function App() {
     const payload = buildSubmissionPayload(
       reservationId,
       primaryGuest,
+      emailAddress,
       phoneNumber,
       additionalGuests.filter((guest) => guest.name.trim()),
+      confirmations,
     )
 
     try {
@@ -176,6 +217,16 @@ function App() {
     )
   }
 
+  function handleConfirmationChange(
+    key: keyof ConfirmationState,
+    checked: boolean,
+  ) {
+    setConfirmations((current) => ({
+      ...current,
+      [key]: checked,
+    }))
+  }
+
   return (
     <main className="page-shell">
       <div className="page-decoration page-decoration-left" aria-hidden="true" />
@@ -240,6 +291,18 @@ function App() {
                   required
                 />
               </label>
+
+              <label className="field-group field-group-full">
+                <span>Email Address</span>
+                <input
+                  type="email"
+                  value={emailAddress}
+                  onChange={(event) => setEmailAddress(event.target.value)}
+                  autoComplete="email"
+                  placeholder="guest@example.com"
+                  required
+                />
+              </label>
             </div>
 
             <section className="guest-section">
@@ -293,6 +356,31 @@ function App() {
               >
                 + Add another guest
               </button>
+            </section>
+
+            <section className="confirmation-section">
+              <div className="section-heading">
+                <div>
+                  <h2>I Confirm That</h2>
+                  <p>Please confirm each statement before submitting your registration.</p>
+                </div>
+              </div>
+
+              <div className="confirmation-list">
+                {CONFIRMATION_OPTIONS.map((option) => (
+                  <label className="confirmation-item" key={option.key}>
+                    <input
+                      type="checkbox"
+                      checked={confirmations[option.key]}
+                      onChange={(event) =>
+                        handleConfirmationChange(option.key, event.target.checked)
+                      }
+                      required
+                    />
+                    <span>{option.label}</span>
+                  </label>
+                ))}
+              </div>
             </section>
 
             {errorMessage ? <p className="form-error">{errorMessage}</p> : null}

@@ -24,33 +24,6 @@ Best regards,
 STR MANAGEMENT
 """
 
-def google_form(code:str):
-
-    reservation_code = code
-
-    og_url = (
-        "https://docs.google.com/forms/d/e/1FAIpQLSdBPfYELiww2uZSbR3XclCJ-6Y12NTIg1m2ZAD7b_Lkcp5Awg/viewform"
-        f"?usp=pp_url&entry.1987306483={quote(reservation_code)}"
-    )
-
-    headers = {
-    "Authorization": f"Bearer {os.getenv('BITLY_TOKEN')}",
-    "Content-Type": "application/json",
-    }
-
-    data = {
-    "long_url": og_url,
-    "domain": "bit.ly",
-    }
-
-    response = requests.post(
-    "https://api-ssl.bitly.com/v4/shorten",
-    headers=headers,
-    json=data,
-    )
-
-    return response.json()["link"]
-
 def get_conversation(reservation_code:str):
     url = f"https://api.hostex.io/v3/reservations?reservation_code={reservation_code}"
 
@@ -88,7 +61,7 @@ def lambda_handler(event,context):
     try:
         reservation_code = event["reservation_code"]
 
-        form = google_form(reservation_code)
+        form = f"https://str-automation.vercel.app/form/{reservation_code}"
 
         convo_and_guest = get_conversation(reservation_code)
 

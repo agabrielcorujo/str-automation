@@ -17,31 +17,30 @@ cmds = [
         "-f",
         "Dockerfile",
         "-t",
-        "str-automation/form-lambda",
+        "str-automation/dashboard-api",
         "."
     ],
     [
         "docker",
         "tag",
-        "str-automation/form-lambda:latest",
-        "471354727816.dkr.ecr.us-east-1.amazonaws.com/str-automation/form-lambda:latest"
+        "str-automation/dashboard-api:latest",
+        "471354727816.dkr.ecr.us-east-1.amazonaws.com/str-automation/dashboard-api:latest"
     ],
     [
         "docker",
         "push",
-        "471354727816.dkr.ecr.us-east-1.amazonaws.com/str-automation/form-lambda:latest"
+        "471354727816.dkr.ecr.us-east-1.amazonaws.com/str-automation/dashboard-api:latest"
     ],
     [
         "aws",
         "lambda",
         "update-function-code",
         "--function-name",
-        "str-automation-form-lambda",
+        "str-automation-dashboard-api",
         "--image-uri",
-        "471354727816.dkr.ecr.us-east-1.amazonaws.com/str-automation/form-lambda:latest"
+        "471354727816.dkr.ecr.us-east-1.amazonaws.com/str-automation/dashboard-api:latest"
     ]
 ]
 
 for cmd in cmds:
-    print("Running:", " ".join(cmd), flush=True)
-    subprocess.run(cmd, check=True)
+    subprocess.run(cmd)
